@@ -52,9 +52,15 @@ Click on your user account. Click Security Credentials tab: Create access key an
 
 https://www.virtualbox.org/wiki/Downloads
 
+> Virtualbox already installed.
+
 ### [2] Download Ubuntu 20.04 LTS iso
 
 https://www.ubuntu.com/download/desktop (approximately 1.86GB)
+
+> Ubuntu 20.04 LTS is my OS.
+
+![My OS.](/labs/images/my_os.png)
 
 ### [3] Setup VM
 
@@ -79,6 +85,8 @@ sudo apt update
 sudo apt -y upgrade
 ```
 
+> Python has already been installed.
+
 To check the latest version:
 ```
 python3 -V
@@ -89,7 +97,14 @@ Now we need to install `pip3`, which is a tool that will allow us to install and
 sudo apt install -y python3-pip
 ```
 
+> pip3 has already been installed.
+
 Python packages can be installed by typing: `pip3 install package_name`
+
+
+> Versions of Python and pip3:
+
+![Python and pip3 versions.](/labs/images/python_pip_version.png)
 
 
 ### [2] Install awscli
@@ -101,6 +116,9 @@ https://docs.aws.amazon.com/cli/latest/userguide/installing.html
 ```
 pip3 install awscli --upgrade
 ```
+
+![Awscli installed.](images/awscli_install.png)
+
 
 Alternatively instally with the command:
 
@@ -124,6 +142,8 @@ AWS Secret Access Key [None]: wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
 Default region name [None]: ap-southeast-2
 Default output format [None]: json
 ```
+
+![Awscli configured.](images/aws_configure.png)
 
 <div class="alert alert-info">
 <b>NOTE:</b> if you have any issues with clipboard copy paste from your machine to the VM, you have to enable clipboard copying from the Devices menu of VirtualBox (Settings > General > Advance > Shared Clipboard > Bidirectional). You will need to run and install the VirtualBox Guest Additions first from the same menu (On 20.04 you need to install build tools first `sudo apt install linux-headers-$(uname -r) build-essential dkms -y`
@@ -149,6 +169,9 @@ You are now set!!
 aws ec2 describe-regions --output table
 ```
 
+![Awscli region table.](images/aws_regions.png)
+
+
 ### [2] Test the python environment
 
 ```
@@ -158,6 +181,8 @@ python3
 >>> response = ec2.describe_regions()
 >>> print(response)
 ```
+
+![Python.](images/python_tryout.png)
 
 This will create an un-tabulated response.
 
