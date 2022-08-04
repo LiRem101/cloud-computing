@@ -40,7 +40,7 @@ You are able to create your own account using a credit card and utilise free res
 ### [2] Make sure you can log into your account
 ### [3] Search and open Identity Access Management
 
-![Virtualbox.](/labs/images/aws.png)
+![Virtualbox.](images/aws.png)
 
 Click on your user account. Click Security Credentials tab: Create access key and make a note of the Access key ID and the secret access key – you will need these for programmatic access to resources.
 
@@ -56,7 +56,7 @@ https://www.virtualbox.org/wiki/Downloads
 
 > Virtualbox already installed.
 
-![Virtualbox.](/labs/images/vb_installed.png)
+![Virtualbox.](images/vb_installed.png)
 
 ### [2] Download Ubuntu 20.04 LTS iso
 
@@ -73,9 +73,9 @@ OPTIONAL If want to run the virtualbox machine in full screen:
 
 https://askubuntu.com/questions/1230797/ubuntu-20-04-vm-always-resizes-screen-to-default-size-when-booting
 
-![Virtualbox ready.](/labs/images/vb_ready.png)
+![Virtualbox ready.](images/vb_ready.png)
 
-![Virtualbox running.](/labs/images/vb_running.png)
+![Virtualbox running.](images/vb_running.png)
 
 
 ## AWSCLI, Boto and Python 3.8.x
@@ -109,7 +109,7 @@ Python packages can be installed by typing: `pip3 install package_name`
 
 > Versions of Python and pip3:
 
-![Python and pip3 versions.](/labs/images/python_pip_version.png)
+![Python and pip3 versions.](images/python_pip_version.png)
 
 
 ### [2] Install awscli
