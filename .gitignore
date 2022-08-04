@@ -1,12 +1,16 @@
 # Added manually
 
 *accessKeys.csv
-my_os.png
 python_pip_version.png
 awscli_install.png
 aws_configure.png
 aws_regions.png
 python_tryout.png
+boto3.png
+vb_installed.png
+vb_ready.png
+vb_running.png
+aws.png
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all

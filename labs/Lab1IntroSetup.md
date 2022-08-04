@@ -40,6 +40,8 @@ You are able to create your own account using a credit card and utilise free res
 ### [2] Make sure you can log into your account
 ### [3] Search and open Identity Access Management
 
+![Virtualbox.](/labs/images/aws.png)
+
 Click on your user account. Click Security Credentials tab: Create access key and make a note of the Access key ID and the secret access key – you will need these for programmatic access to resources.
 
 <div class="alert alert-info" style="font-size:100%">
@@ -54,13 +56,12 @@ https://www.virtualbox.org/wiki/Downloads
 
 > Virtualbox already installed.
 
+![Virtualbox.](/labs/images/vb_installed.png)
+
 ### [2] Download Ubuntu 20.04 LTS iso
 
 https://www.ubuntu.com/download/desktop (approximately 1.86GB)
 
-> Ubuntu 20.04 LTS is my OS.
-
-![My OS.](/labs/images/my_os.png)
 
 ### [3] Setup VM
 
@@ -71,6 +72,10 @@ https://linuxhint.com/install_ubuntu_virtualbox_2004/
 OPTIONAL If want to run the virtualbox machine in full screen:
 
 https://askubuntu.com/questions/1230797/ubuntu-20-04-vm-always-resizes-screen-to-default-size-when-booting
+
+![Virtualbox ready.](/labs/images/vb_ready.png)
+
+![Virtualbox running.](/labs/images/vb_running.png)
 
 
 ## AWSCLI, Boto and Python 3.8.x
@@ -156,6 +161,9 @@ Default output format [None]: json
 pip3 install boto3
 ```
 
+![Boto3 installed.](images/boto3.png)
+
+
 You are now set!!
 
 <div class="alert alert-info">
@@ -187,6 +195,36 @@ python3
 This will create an un-tabulated response.
 
 ### [3] Put this code into a python file and tabulate the print to have 2 columns with Endpoint and RegionName
+
+> Python code:
+
+```
+import boto3
+from tabulate import tabulate
+
+def grep_data():
+    ec2 = boto3.client('ec2')
+    return ec2.describe_regions()
+
+def extract_endpoint_regionname(data: dict):
+    list_of_regions = data['Regions']
+    result = [['Endpoint', 'RegionName']]
+    for region in list_of_regions:
+        result.append([region['Endpoint'], region['RegionName']])
+    return result
+
+def print_table(data: list):
+    print(tabulate(data, headers='firstrow'))
+
+if __name__ == '__main__':
+    data = grep_data()
+    data_list = extract_endpoint_regionname(data)
+    print_table(data_list)
+```
+
+> Output:
+
+![Python output.](images/python_output.png)
 
 Lab Assessment:
 
