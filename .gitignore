@@ -21,6 +21,11 @@ keypair_to_ssh.png
 create-instance-id.png
 public_id.png
 connect_to_instance.png
+docker_version.png
+docker-build.png
+docker-run.png
+__pycache__
+
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all

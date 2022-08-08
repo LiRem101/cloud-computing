@@ -110,6 +110,53 @@ TODO
 ### [1] Repeat the steps above using the equivalent Boto commands in a python script. The script should output the IP address to connect to.
 
 
+```
+import boto3
+import botocore.exceptions
+#import botocore.client
+import credentials as cred
+
+
+def create_group_and_key(ec2, groupname: str, keyname: str):
+    try:
+        ec2.create_security_group(GroupName=groupname, Description="security group for development environment")
+        ec2.authorize_security_group_ingress(GroupName=groupname, IpProtocol="tcp", FromPort=22, ToPort=22,
+                                             CidrIp="0.0.0.0/0")
+    except botocore.exceptions.ClientError:
+        print("Group already existed.")
+
+    try:
+        key = ec2.create_key_pair(KeyName=keyname)
+        with open(cred.KEY_FIlE, "w") as f:
+            f.write("-----BEGIN RSA PRIVATE KEY-----\n")
+            f.write(key['KeyMaterial'])
+            f.write("-----END RSA PRIVATE KEY-----\n")
+    except botocore.exceptions.ClientError:
+        print("Key already existed.")
+
+
+def get_public_ip_address(ec2, groupname: str):
+    instance = ec2.run_instances(ImageId="ami-d38a4ab1", SecurityGroupIds=[groupname], MaxCount=1, MinCount=1,
+                                 InstanceType='t2.micro', KeyName=keyname)
+    instance_id = instance['Instances'][0]['InstanceId']
+    inst_description = ec2.describe_instances(InstanceIds=[instance_id])
+    publicId = inst_description['Reservations'][0]['Instances'][0]['PublicIpAddress']
+    return publicId
+
+
+if __name__ == '__main__':
+    student_nr = cred.STUD_NR
+    ec2 = boto3.client('ec2')
+    groupname = str(student_nr) + "-sg"
+    keyname = str(student_nr) + "-key"
+    create_group_and_key(ec2, groupname, keyname)
+    publicIp = get_public_ip_address(ec2, groupname)
+    print("Public IP address is " + publicIp)
+```
+
+TODO Screenshot
+
+
 Optional: Create an EC2 instance using the console interface. Are there any differences from doing through the command line?
 
 ## Using Docker
@@ -118,6 +165,8 @@ Optional: Create an EC2 instance using the console interface. Are there any diff
 ```
 sudo apt install docker.io -y
 ```
+
+> Docker already installed.
 
 You may have to
 
@@ -131,6 +180,9 @@ sudo systemctl enable docker
 ```
 docker --version
 ```
+
+![Docker Version.](images/docker_version.png)
+
 
 ### [3] Build and run an httpd container
 
@@ -147,6 +199,9 @@ Edit a file index.html inside the html directory and add the following content
   </html>
 ```
 
+![Created index.html.](images/created_index_html.png)
+
+
 ### [4] Create a file called “Dockerfile” outside the html directory with the following content:
 
 ```
@@ -154,11 +209,16 @@ FROM httpd:2.4
 COPY ./html/ /usr/local/apache2/htdocs/
 ```
 
+![Created Dockerfile.](images/Dockerfile_content.png)
+
 ### [5] Build the docker image
 
 ```
 docker build -t my-apache2 .
 ```
+
+![Build.](images/docker-build.png)
+
 
 If you run into permission errors, you may need add your user to the docker group:
 
@@ -174,7 +234,12 @@ Be sure to log out and log back in for this change to take effect.
 docker run -p 80:80 -dit --name my-app my-apache2
 ```
 
+![Run.](images/docker-run.png)
+
+
 ### [7] Open a browser and access address http://localhost or http://127.0.0.1 Confirm you get Hello World!
+
+![Hello World at localhost.](images/docker-hello-world.png)
 
 ### [8] Other commands
 
@@ -184,12 +249,17 @@ To check what is running
 docker ps -a
 ```
 
+![See what is running.](images/docker-ps-a.png)
+
 To stop and remove the container
 
 ```
 docker stop my-app
 docker rm my-app
 ```
+
+![Stop and delete container.](images/docker-delete.png)
+
 
 Lab Assessment:
 
