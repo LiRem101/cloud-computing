@@ -1,5 +1,6 @@
 # Added manually
 
+23697359-key.pem
 *accessKeys.csv
 python_pip_version.png
 awscli_install.png
@@ -12,6 +13,13 @@ vb_ready.png
 vb_running.png
 aws.png
 Lab1IntroSetup.pdf
+labs/images/authorise_inbound_traffic.png
+labs/images/create_security_group.png
+create-key-pair.png
+keypair_to_ssh.png
+create-instance-id.png
+public_id.png
+connect_to_instance.png
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all
