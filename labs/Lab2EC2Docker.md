@@ -93,7 +93,7 @@ ssh -i <student number>-key.pem ubuntu@<IP Address>
 
 ### [7] Look at the instance using the AWS console
 
-TODO
+![Instances at AWS console.](images/instances_aws_console.png)
 
 ### [8] ****NOTE*****
 
@@ -103,7 +103,8 @@ or
 aws ec2 terminate-instances --instance-ids i-<your instance id>
 ```
 
-TODO
+![Terminating the instance.](images/terminating_instance.png)
+
 
 ## Create an EC2 instance with Python Boto script
 
@@ -139,6 +140,7 @@ def get_public_ip_address(ec2, groupname: str):
     instance = ec2.run_instances(ImageId="ami-d38a4ab1", SecurityGroupIds=[groupname], MaxCount=1, MinCount=1,
                                  InstanceType='t2.micro', KeyName=keyname)
     instance_id = instance['Instances'][0]['InstanceId']
+    time.sleep(1) # To give AWS the time to launch the instance. Otherwise, the PublicIp is not available.
     inst_description = ec2.describe_instances(InstanceIds=[instance_id])
     publicId = inst_description['Reservations'][0]['Instances'][0]['PublicIpAddress']
     return publicId
@@ -154,7 +156,7 @@ if __name__ == '__main__':
     print("Public IP address is " + publicIp)
 ```
 
-TODO Screenshot
+![Output of the Python code.](images/python_output_public_ip.png)
 
 
 Optional: Create an EC2 instance using the console interface. Are there any differences from doing through the command line?

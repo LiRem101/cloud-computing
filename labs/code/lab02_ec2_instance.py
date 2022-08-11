@@ -1,7 +1,7 @@
 import boto3
 import botocore.exceptions
-#import botocore.client
 import credentials as cred
+import time
 
 
 def create_group_and_key(ec2, groupname: str, keyname: str):
@@ -26,6 +26,7 @@ def get_public_ip_address(ec2, groupname: str):
     instance = ec2.run_instances(ImageId="ami-d38a4ab1", SecurityGroupIds=[groupname], MaxCount=1, MinCount=1,
                                  InstanceType='t2.micro', KeyName=keyname)
     instance_id = instance['Instances'][0]['InstanceId']
+    time.sleep(1) # To give AWS the time to launch the instance. Otherwise, the PublicIp is not available.
     inst_description = ec2.describe_instances(InstanceIds=[instance_id])
     publicId = inst_description['Reservations'][0]['Instances'][0]['PublicIpAddress']
     return publicId
