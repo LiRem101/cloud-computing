@@ -1,5 +1,6 @@
 # Added manually
 
+/labs/code/lab03/s3_restore/
 credentials.py
 23697359-key.pem
 *accessKeys.csv
