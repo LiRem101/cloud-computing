@@ -16,11 +16,16 @@ s3 = boto3.client("s3")
 dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
 
 def upload_file(folder_name, file, file_name):
-    print("Uploading %s" % file)
+    item_from_db = dynamodb.get_item(TableName="CloudFiles",
+                                     Key={'userId': {'S': USER_ID}, 'fileName': {'S': file_name}})
     stats = os.stat(file)
     permissions = stat.filemode(stats.st_mode)
     owner = pwd.getpwuid(stats.st_uid).pw_name
     last_updated = time.strftime('%a, %d %b %Y %H:%M:%S %Z', time.gmtime(stats.st_mtime))
+    if 'Item' in item_from_db and last_updated == item_from_db['Item']['lastUpdated']['S']:
+        print("File has not been changed since last upload.")
+        return
+    print("Uploading %s" % file)
     try:
         response = s3.upload_file(Filename=file, Bucket=ROOT_S3_DIR, Key="/%s%s" % (folder_name, file_name))
         print(response)
