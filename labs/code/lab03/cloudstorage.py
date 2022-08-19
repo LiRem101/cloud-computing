@@ -60,6 +60,6 @@ def upload_files():
 
 if __name__ == '__main__':
     bucket_config = {'LocationConstraint': 'ap-southeast-2'}
-    if ('-i' in sys.argv or '--initialise=True' in sys.argv):
+    if '-i' in sys.argv or '--initialise=True' in sys.argv:
         create_bucket(bucket_config)
         upload_files()
