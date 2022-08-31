@@ -54,9 +54,54 @@ changes (folders, username, etc) to the policy as necessary.
 
 ```
 
-You can test it by applying the policy to a single folder and using a
-username that is not your own. Confirm that you no longer have access
-to that folder's contents.
+> Changed `create_bucket` of `cloudstorage.py` to:
+
+```
+def create_bucket(bucket_config: dict):
+    try:
+        response = s3.create_bucket(Bucket=ROOT_S3_DIR, CreateBucketConfiguration=bucket_config)
+    except botocore.exceptions.ClientError as error:
+        if error.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
+            response = "Bucket already existed."
+        else:
+            raise error
+    policy = {"Version": "2012-10-17",
+              "Statement": {
+                  "Sid": "AllowAllS3ActionsInUserFolderForUserOnly",
+                  "Effect": "DENY",
+                  "Principal": "*",
+                  "Action": "s3:*",
+                  "Resource": f'arn:aws:s3:::{ROOT_S3_DIR}/*',
+                  "Condition": {
+                      "StringNotLike": {
+                          "aws:username": f'{str(USER_ID)}@student.uwa.edu.au'}}}}
+    policy = json.dumps(policy)
+    s3.put_bucket_policy(Bucket=ROOT_S3_DIR, Policy=policy)
+    print(response)
+```
+
+Results into:
+
+![I can still access bucket files after policy had been applied.](images/lab04_access_works.png)
+
+You can test it by applying the policy to a single folder and using a username that is not your own. Confirm that you no longer have access to that folder's contents.
+
+> Changed policy to:
+
+```
+{"Version": "2012-10-17",
+              "Statement": {
+                  "Sid": "AllowAllS3ActionsInUserFolderForUserOnly",
+                  "Effect": "DENY",
+                  "Principal": "*",
+                  "Action": "s3:*",
+                  "Resource": f'arn:aws:s3:::{ROOT_S3_DIR}//rootdir/subdir/*',
+                  "Condition": {
+                      "StringNotLike": {
+                          "aws:username": "123456789@student.uwa.edu.au"}}}}
+```
+
+![I cannot access the subdir anymore.](images/lab04_access_works_not.png)
 
 
 ## [Step 2] AES Encryption using KMS
