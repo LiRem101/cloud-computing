@@ -1,3 +1,4 @@
+import json
 import os
 import boto3
 import botocore.exceptions
@@ -45,6 +46,18 @@ def create_bucket(bucket_config: dict):
             response = "Bucket already existed."
         else:
             raise error
+    policy = {"Version": "2012-10-17",
+              "Statement": {
+                  "Sid": "AllowAllS3ActionsInUserFolderForUserOnly",
+                  "Effect": "DENY",
+                  "Principal": "*",
+                  "Action": "s3:*",
+                  "Resource": f'arn:aws:s3:::{ROOT_S3_DIR}/*',
+                  "Condition": {
+                      "StringNotLike": {
+                          "aws:username": f'{str(USER_ID)}@student.uwa.edu.au'}}}}
+    policy = json.dumps(policy)
+    s3.put_bucket_policy(Bucket=ROOT_S3_DIR, Policy=policy)
     print(response)
 
 
