@@ -14,6 +14,7 @@ IGNORED = ['./s3_restore', './__', './dynamodb']
 USER_ID = str(cred.STUD_NR)
 
 s3 = boto3.client("s3")
+kms = boto3.client('kms')
 dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
 
 def upload_file(folder_name, file, file_name):
@@ -28,12 +29,16 @@ def upload_file(folder_name, file, file_name):
         return
     print("Uploading %s" % file)
     try:
-        response = s3.upload_file(Filename=file, Bucket=ROOT_S3_DIR, Key="/%s%s" % (folder_name, file_name))
-        print(response)
-        dynamodb.put_item(TableName='CloudFiles',
-                          Item={'userId': {'S': USER_ID}, 'fileName': {'S': file_name}, 'path': {'S': folder_name},
-                                'lastUpdated': {'S': last_updated}, 'owner': {'S': owner},
-                                'permissions': {'S': permissions}})
+        with open(file, 'r') as file:
+            key_alias = "alias/" + USER_ID
+            encrypted_content = kms.encrypt(KeyId=key_alias, Plaintext=bytes(file.read(), 'utf-8'))['CiphertextBlob']
+            print("Decrypted content into %s" % encrypted_content)
+            response = s3.put_object(Bucket=ROOT_S3_DIR, Body=encrypted_content, Key="/%s%s" % (folder_name, file_name))
+            print(response)
+            dynamodb.put_item(TableName='CloudFiles',
+                              Item={'userId': {'S': USER_ID}, 'fileName': {'S': file_name}, 'path': {'S': folder_name},
+                                    'lastUpdated': {'S': last_updated}, 'owner': {'S': owner},
+                                    'permissions': {'S': permissions}})
     except Exception as error:
         print("Error: " + str(error))
 

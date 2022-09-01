@@ -4,9 +4,13 @@ import credentials as cred
 import pwd
 import stat
 import sys
+import credentials as cred
 
 ROOT_DIR = '.'
 ROOT_S3_DIR = str(cred.STUD_NR) + '-cloudstorage'
+USER_ID = str(cred.STUD_NR)
+
+kms = boto3.client('kms')
 
 
 def create_permission_logic(permissions: str):
@@ -36,8 +40,10 @@ def restore_file(file_name: str, owner: str, permissions: str):
     print("Downloading %s" % file_name)
     filecontent = b''
     try:
+        key_alias = "alias/" + USER_ID
         response = s3.get_object(Bucket=ROOT_S3_DIR, Key=file_name)
-        filecontent = response['Body']
+        decrypted_content = kms.decrypt(CiphertextBlob=response['Body'].read(), KeyId=key_alias)['Plaintext']
+        filecontent = decrypted_content
     except Exception as error:
         print("Error: " + str(error))
 
@@ -53,7 +59,7 @@ def restore_file(file_name: str, owner: str, permissions: str):
     if not os.path.exists(path):
         os.makedirs(path)
     with open(str("./s3_restore" + file_name), 'w') as file:
-        file.write(bytes.decode(filecontent.read()))
+        file.write(bytes.decode(filecontent))
 
     if not owner == "":
         os.chown(str("./s3_restore" + file_name), uid, -1)

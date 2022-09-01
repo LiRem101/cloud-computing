@@ -188,7 +188,307 @@ attaching it to the key.
 }
 ```
 
+> Created `create_kms_key.py`:
+
+```
+import boto3
+import credentials as cred
+import json
+
+USER_ID = str(cred.STUD_NR)
+KEY_POLICY = {
+    "Version": "2012-10-17",
+    "Id": "key-consolepolicy-3",
+    "Statement": [
+        {
+            "Sid": "Enable IAM User Permissions",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": "arn:aws:iam::523265914192:root"
+            },
+            "Action": "kms:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow access for Key Administrators",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": f'arn:aws:iam::523265914192:user/{USER_ID}@student.uwa.edu.au'
+            },
+            "Action": [
+                "kms:Create*",
+                "kms:Describe*",
+                "kms:Enable*",
+                "kms:List*",
+                "kms:Put*",
+                "kms:Update*",
+                "kms:Revoke*",
+                "kms:Disable*",
+                "kms:Get*",
+                "kms:Delete*",
+                "kms:TagResource",
+                "kms:UntagResource",
+                "kms:ScheduleKeyDeletion",
+                "kms:CancelKeyDeletion"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow use of the key",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": f'arn:aws:iam::523265914192:user/{USER_ID}@student.uwa.edu.au'
+            },
+            "Action": [
+                "kms:Encrypt",
+                "kms:Decrypt",
+                "kms:ReEncrypt*",
+                "kms:GenerateDataKey*",
+                "kms:DescribeKey"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "Allow attachment of persistent resources",
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": f'arn:aws:iam::523265914192:user/{USER_ID}@student.uwa.edu.au'
+            },
+            "Action": [
+                "kms:CreateGrant",
+                "kms:ListGrants",
+                "kms:RevokeGrant"
+            ],
+            "Resource": "*",
+            "Condition": {
+                "Bool": {
+                    "kms:GrantIsForAWSResource": "true"
+                }
+            }
+        }
+    ]
+}
+
+kms = boto3.client('kms')
+
+# parse directory and upload files
+def create_key():
+    key_policy = json.dumps(KEY_POLICY)
+    response = kms.create_key(Policy=key_policy)
+    kms.create_alias(AliasName="alias/" + USER_ID, TargetKeyId=response['KeyMetadata']['KeyId'])
+    print(response)
+
+
+if __name__ == '__main__':
+    create_key()
+
+```
+
+> Output when executed:
+
+![Creation of kms key.](images/lab04_create_key.png)
+
+
 In your CloudStorage application add the ability to encrypt and decrypt the files you find using the KMS Client apis of boto3.
+
+> Changed `cloudstorage.py` to:
+
+```
+import json
+import os
+import boto3
+import botocore.exceptions
+import stat
+import sys
+import credentials as cred
+import pwd
+import time
+
+ROOT_DIR = '.'
+ROOT_S3_DIR = str(cred.STUD_NR) + '-cloudstorage'
+IGNORED = ['./s3_restore', './__', './dynamodb']
+USER_ID = str(cred.STUD_NR)
+
+s3 = boto3.client("s3")
+kms = boto3.client('kms')
+dynamodb = boto3.client('dynamodb', endpoint_url='http://localhost:8000')
+
+def upload_file(folder_name, file, file_name):
+    item_from_db = dynamodb.get_item(TableName="CloudFiles",
+                                     Key={'userId': {'S': USER_ID}, 'fileName': {'S': file_name}})
+    stats = os.stat(file)
+    permissions = stat.filemode(stats.st_mode)
+    owner = pwd.getpwuid(stats.st_uid).pw_name
+    last_updated = time.strftime('%a, %d %b %Y %H:%M:%S %Z', time.gmtime(stats.st_mtime))
+    if 'Item' in item_from_db and last_updated == item_from_db['Item']['lastUpdated']['S']:
+        print("File has not been changed since last upload.")
+        return
+    print("Uploading %s" % file)
+    try:
+        with open(file, 'r') as file:
+            key_alias = "alias/" + USER_ID
+            encrypted_content = kms.encrypt(KeyId=key_alias, 
+                                            Plaintext=bytes(file.read(), 'utf-8'))['CiphertextBlob']
+            print("Decrypted content into %s" % encrypted_content)
+            response = s3.put_object(Bucket=ROOT_S3_DIR, Body=encrypted_content, 
+                                      Key="/%s%s" % (folder_name, file_name))
+            print(response)
+            dynamodb.put_item(TableName='CloudFiles',
+                              Item={'userId': {'S': USER_ID}, 'fileName': {'S': file_name},
+                                    'path': {'S': folder_name}, 'lastUpdated': {'S': last_updated}, 
+                                    'owner': {'S': owner}, 'permissions': {'S': permissions}})
+    except Exception as error:
+        print("Error: " + str(error))
+
+
+def create_bucket(bucket_config: dict):
+    try:
+        response = s3.create_bucket(Bucket=ROOT_S3_DIR, CreateBucketConfiguration=bucket_config)
+    except botocore.exceptions.ClientError as error:
+        if error.response['Error']['Code'] == 'BucketAlreadyOwnedByYou':
+            response = "Bucket already existed."
+        else:
+            raise error
+    policy = {"Version": "2012-10-17",
+              "Statement": {
+                  "Sid": "AllowAllS3ActionsInUserFolderForUserOnly",
+                  "Effect": "DENY",
+                  "Principal": "*",
+                  "Action": "s3:*",
+                  "Resource": f'arn:aws:s3:::{ROOT_S3_DIR}/*',
+                  "Condition": {
+                      "StringNotLike": {
+                          "aws:username": f'{str(USER_ID)}@student.uwa.edu.au'}}}}
+    policy = json.dumps(policy)
+    s3.put_bucket_policy(Bucket=ROOT_S3_DIR, Policy=policy)
+    print(response)
+
+
+# parse directory and upload files
+def upload_files():
+    for dir_name, subdir_list, file_list in os.walk(ROOT_DIR, topdown=True):
+        if dir_name != ROOT_DIR and not any(list(map(dir_name.startswith, IGNORED))):
+            for fname in file_list:
+                upload_file("%s/" % dir_name[2:], "%s/%s" % (dir_name, fname), fname)
+
+    print("done")
+
+
+if __name__ == '__main__':
+    bucket_config = {'LocationConstraint': 'ap-southeast-2'}
+    if '-i' in sys.argv or '--initialise=True' in sys.argv:
+        create_bucket(bucket_config)
+        upload_files()
+
+```
+
+> Changed `restorefromcloud.py` to:
+
+```
+import os
+import boto3
+import credentials as cred
+import pwd
+import stat
+import sys
+import credentials as cred
+
+ROOT_DIR = '.'
+ROOT_S3_DIR = str(cred.STUD_NR) + '-cloudstorage'
+USER_ID = str(cred.STUD_NR)
+
+kms = boto3.client('kms')
+
+
+def create_permission_logic(permissions: str):
+    p_arg = False
+    if permissions[0] == 'r':
+        p_arg = p_arg | stat.S_IRUSR
+    if permissions[1] == 'w':
+        p_arg = p_arg | stat.S_IWUSR
+    if permissions[2] == 'x':
+        p_arg = p_arg | stat.S_IXUSR
+    if permissions[3] == 'r':
+        p_arg = p_arg | stat.S_IRGRP
+    if permissions[4] == 'w':
+        p_arg = p_arg | stat.S_IWGRP
+    if permissions[5] == 'x':
+        p_arg = p_arg | stat.S_IXGRP
+    if permissions[6] == 'r':
+        p_arg = p_arg | stat.S_IROTH
+    if permissions[7] == 'w':
+        p_arg = p_arg | stat.S_IWOTH
+    if permissions[8] == 'x':
+        p_arg = p_arg | stat.S_IXOTH
+    return p_arg
+
+
+def restore_file(file_name: str, owner: str, permissions: str):
+    print("Downloading %s" % file_name)
+    filecontent = b''
+    try:
+        key_alias = "alias/" + USER_ID
+        response = s3.get_object(Bucket=ROOT_S3_DIR, Key=file_name)
+        decrypted_content = kms.decrypt(CiphertextBlob=response['Body'].read(), 
+                                        KeyId=key_alias)['Plaintext']
+        filecontent = decrypted_content
+    except Exception as error:
+        print("Error: " + str(error))
+
+    if not owner == "":
+        # Checking uid here to abort if not fitting user exists
+        # before anything is actually pulled out of bucket
+        uid = pwd.getpwnam(owner).pw_uid
+    if not permissions == "":
+        p_arg = create_permission_logic(permissions)
+
+    path = './s3_restore' + '/'.join(file_name.split('/')[:-1])
+
+    if not os.path.exists(path):
+        os.makedirs(path)
+    with open(str("./s3_restore" + file_name), 'w') as file:
+        file.write(bytes.decode(filecontent))
+
+    if not owner == "":
+        os.chown(str("./s3_restore" + file_name), uid, -1)
+    if not permissions == "":
+        os.chmod(str("./s3_restore" + file_name), p_arg)
+
+
+# parse directory and upload files
+def restore_files(owner: str, permissions: str):
+    objects_of_bucket = s3.list_objects_v2(Bucket=ROOT_S3_DIR)
+    if 'Contents' in objects_of_bucket:
+        for content in objects_of_bucket['Contents']:
+            restore_file(file_name=content['Key'], owner=owner, permissions=permissions)
+    print("done")
+
+
+if __name__ == '__main__':
+    s3 = boto3.client("s3")
+    bucket_config = {'LocationConstraint': 'ap-southeast-2'}
+    owner = ""
+    permissions = ""
+    if '--owner' in sys.argv:
+        i = sys.argv.index('--owner') + 1
+        if len(sys.argv) > i:
+            owner = sys.argv[i]
+        else:
+            raise Exception("--owner needs a parameter.")
+    if '--permissions' in sys.argv:
+        i = sys.argv.index('--permissions') + 1
+        if len(sys.argv) > i:
+            permissions = sys.argv[i]
+        else:
+            raise Exception("--permissions needs a parameter.")
+    restore_files(owner=owner, permissions=permissions)
+
+```
+
+> When executed:
+
+![Up- and download with encryption.](images/lab04_upload_download_with_encryption.png)
+
 
 **Optional**
 
