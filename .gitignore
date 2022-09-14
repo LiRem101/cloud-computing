@@ -29,6 +29,8 @@ instances_aws_console.png
 terminating_instance.png
 Lab2EC2Docker.pdf
 Lab3S3DynamoDB.pdf
+Lab4KMSEncryption.pdf
+Lab5Networking.pdf
 lab3_s3_save.png
 __pycache__
 dynamodb/
@@ -39,7 +41,11 @@ lab04_access_works.png
 lab04_access_works_not.png
 lab04_create_key.png
 lab04_upload_download_with_encryption.png
-
+lab05_ssh_into.png
+lab05_loader_py_output.png
+lab05_browser_a.png
+lab05_browser_b.png
+lab05_sshd_install.png
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all
