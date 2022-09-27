@@ -32,6 +32,7 @@ Lab3S3DynamoDB.pdf
 Lab4KMSEncryption.pdf
 Lab5Networking.pdf
 Lab6WebApplication.pdf
+Lab7DevOps.pdf
 lab3_s3_save.png
 __pycache__
 dynamodb/
@@ -51,6 +52,7 @@ lab06_lb_security_group.png
 lab06_health_check.png
 lab06_registered_target.png
 lab06_lb_browser.png
+lab07_ssh_config.png
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all
