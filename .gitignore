@@ -33,6 +33,7 @@ Lab4KMSEncryption.pdf
 Lab5Networking.pdf
 Lab6WebApplication.pdf
 Lab7DevOps.pdf
+Lab8AI.pdf
 lab3_s3_save.png
 __pycache__
 dynamodb/
@@ -53,7 +54,15 @@ lab06_health_check.png
 lab06_registered_target.png
 lab06_lb_browser.png
 lab07_ssh_config.png
+lab08_jpyt_*.png
 
+.~LabAI.ipynb
+.ipynb_checkpoints/
+bank-additional/
+__MACOSX/
+test.csv
+train.csv
+validation.csv
 
 # Created by https://www.toptal.com/developers/gitignore/api/pycharm+all
 # Edit at https://www.toptal.com/developers/gitignore?templates=pycharm+all
